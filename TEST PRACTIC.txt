@@ -1,0 +1,144 @@
+bits 32 
+global start        
+
+extern exit, printf, scanf             
+import exit msvcrt.dll 
+import scanf msvcrt.dll 
+import printf msvcrt.dll    
+                         
+segment data use32 class=data
+formatInitial db 10,13,"Introduceti un sir de caractere:",10,13,0
+formatSir db "%s", 0
+sir db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+l dd 0
+suma dd 0
+formatMic db "lungimea sirului (%u) este mai mica de 10",0
+formatMare db "lungimea sirului (%u) este mai mare de 20",0
+formatPar db "lungimea sirului (%u) este numar impar",0
+formatSuma db "Suma este: %d",10,13,0
+formatBits db "Numar de bits de 1: %d",10,13,0
+bits_count db 1
+
+
+segment code use32 class=code 
+start:
+    
+inceput:  
+
+push dword formatInitial
+call [printf]
+add esp, 4
+  
+push dword sir
+push dword formatSir
+call[scanf]
+add ESP, 2*4  
+
+mov esi, 0
+bucla:
+cmp byte [sir+esi], 0  
+je next
+inc esi
+jmp bucla
+
+next:
+mov [l], esi
+
+cmp dword [l], 10
+jb ermic
+cmp dword [l], 20
+ja ermare
+
+mov edx, 0
+mov eax, [l]
+mov ecx, 2
+div ecx      
+cmp edx, 0
+jnz erpar
+
+mov esi, 0
+ 
+repeta:
+
+mov dword [suma], 0   
+
+mov ecx, esi  
+add ecx, 2   
+cmp ecx, [l]  
+jge sf
+
+mov eax,dword [sir+esi]
+;--------------------------------------  
+sub eax, '0'               
+cbw                         ; Convert ASCII character to numeric value
+cwde
+;--------------------------------------
+add [suma], eax            
+
+mov eax, dword [sir+esi+1]
+;-------------------------------------- 
+sub eax, '0'                 
+cbw                             ; Convert ASCII character to numeric value
+cwde
+;---------------------------------------
+add [suma], eax               
+
+
+
+mov eax, [suma]
+call count_bits
+
+push dword [suma]
+push dword formatSuma
+call [printf]
+add esp, 2*4
+
+push dword [bits_count]
+push dword formatBits
+call [printf]
+add esp, 2*4
+
+add esi, 2  
+jmp repeta
+
+;----------------------------------------------------------------------------
+count_bits:
+    mov eax, [suma]      ; Load the current pair sum into eax
+    mov ebx, 0           ; ebx will store the count of bits
+count_bits_loop:
+    test eax, 1          ; check the least significant bit
+    jz count_bits_clear  ; if it's 0, jump to count_bits_clear
+    inc ebx              ; increment the count
+count_bits_clear:
+    shr eax, 1           ; shift right
+    jnz count_bits_loop  ; if eax is not zero, repeat the loop
+    mov [bits_count], ebx
+    ret
+;------------------------------------------------------------------------------
+
+
+ermic:
+push dword [l]
+push formatMic
+call [printf]
+add esp, 2*4
+jmp inceput
+
+ermare:
+push dword [l]
+push formatMare
+call [printf]
+add esp, 2*4
+jmp inceput
+
+erpar:
+push dword [l]
+push formatPar
+call [printf]
+add esp, 2*4
+jmp inceput
+
+sf:
+    push    dword 0      
+    call    [exit]
+    
